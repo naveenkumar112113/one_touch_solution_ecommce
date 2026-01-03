@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const Make = require('../models/Make');
 const Model = require('../models/Model');
 const Product = require('../models/Product');
+const generateSlug = require('../utils/generateSlug');
 
 // @desc    Fetch all makes
 // @route   GET /api/makes
@@ -51,12 +52,16 @@ const createMake = asyncHandler(async (req, res) => {
         throw new Error('Make already exists');
     }
 
+    // Generate slug if not provided
+    var slug = await generateSlug(name, Make);
+
     const make = await Make.create({
         name,
         description,
         logo,
         categories: categories || [],
         isActive: true,
+        slug: slug
     });
 
     res.status(201).json(make);

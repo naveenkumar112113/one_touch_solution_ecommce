@@ -69,6 +69,37 @@ const productSchema = mongoose.Schema({
         type: Number,
         default: 0,
     },
+    zoho_item_id: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    sku: {
+        type: String,
+    },
+    group_id: {
+        type: String,
+    },
+    group_name: {
+        type: String,
+    },
+    actual_available_stock: {
+        type: Number,
+        default: 0,
+    },
+    reorder_level: {
+        type: Number,
+        default: 0,
+    },
+    status: {
+        type: String,
+    },
+    last_zoho_modified_time: {
+        type: Date,
+    },
+    last_synced_at: {
+        type: Date,
+    },
 }, {
     timestamps: true,
 });
