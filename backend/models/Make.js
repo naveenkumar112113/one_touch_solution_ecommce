@@ -38,7 +38,6 @@ makeSchema.pre('save', function (next) {
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
     }
-    next();
 });
 
 const Make = mongoose.model('Make', makeSchema);

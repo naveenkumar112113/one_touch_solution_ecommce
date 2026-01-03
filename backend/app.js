@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const path = require('path');
 
 // Helper to disable caching
 const noCache = (req, res, next) => {
@@ -27,6 +28,10 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/makes', require('./routes/makeRoutes'));
 app.use('/api/models', require('./routes/modelRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
+
+const __dirname1 = path.resolve();
+app.use('/uploads', express.static(path.join(__dirname1, '/uploads')));
 
 app.get('/', (req, res) => {
     res.send('API is running...');

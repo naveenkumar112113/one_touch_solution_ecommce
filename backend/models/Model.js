@@ -46,7 +46,6 @@ modelSchema.pre('save', function (next) {
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
     }
-    next();
 });
 
 const Model = mongoose.model('Model', modelSchema);
