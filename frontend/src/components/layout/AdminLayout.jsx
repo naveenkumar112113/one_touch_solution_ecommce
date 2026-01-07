@@ -1,9 +1,24 @@
-import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { FaTachometerAlt, FaBox, FaShoppingBag, FaUsers, FaSignOutAlt, FaTags, FaIndustry, FaMobileAlt } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminLayout = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, loading, logout } = useAuth();
+
+    useEffect(() => {
+        if (!loading) {
+            if (!user || !user.isAdmin) {
+                navigate('/login');
+            }
+        }
+    }, [user, loading, navigate]);
+
+    if (loading) return <div>Loading...</div>;
+
+    if (!user || !user.isAdmin) return null; // Prevent flash of content
 
     const menuItems = [
         { path: '/admin/dashboard', icon: <FaTachometerAlt />, label: 'Dashboard' },
@@ -41,7 +56,13 @@ const AdminLayout = () => {
                 </nav>
 
                 <div className="p-4 border-t border-slate-800">
-                    <button className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-3 w-full rounded-lg hover:bg-slate-800 transition">
+                    <button
+                        onClick={() => {
+                            logout();
+                            navigate('/login');
+                        }}
+                        className="flex items-center space-x-3 text-gray-400 hover:text-white px-4 py-3 w-full rounded-lg hover:bg-slate-800 transition"
+                    >
                         <FaSignOutAlt />
                         <span>Logout</span>
                     </button>
