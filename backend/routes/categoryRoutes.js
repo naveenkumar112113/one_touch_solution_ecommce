@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     getCategories,
     getCategoryById,
+    getCategoryBySlug,
     getSubcategories,
     createCategory,
     updateCategory,
@@ -21,5 +22,7 @@ router.route('/:id')
 
 router.route('/:id/subcategories')
     .get(getSubcategories);
+
+router.route('/slug/:slug').get(getCategoryBySlug);
 
 module.exports = router;

@@ -6,9 +6,38 @@ const generateSlug = require('../utils/generateSlug');
 // @desc    Fetch all models
 // @route   GET /api/models
 // @access  Public
+// @desc    Fetch all models
+// @route   GET /api/models
+// @access  Public
 const getModels = asyncHandler(async (req, res) => {
-    const models = await Model.find({ isActive: true })
-        .populate('make', 'name slug logo')
+    const { make, category } = req.query;
+    let query = { isActive: true };
+
+    if (make) {
+        const Make = require('../models/Make');
+        // Check if ID
+        if (make.match(/^[0-9a-fA-F]{24}$/)) {
+            query.make = make;
+        } else {
+            const makeObj = await Make.findOne({ slug: make });
+            if (makeObj) {
+                query.make = makeObj._id;
+            } else {
+                return res.json([]);
+            }
+        }
+    }
+
+    // Support legacy category filter if needed, though strictly we go via Make
+    if (category) {
+        query.category = category;
+    }
+
+    const models = await Model.find(query)
+        .populate({
+            path: 'make',
+            select: 'name slug logo'
+        })
         .populate('category', 'name slug');
     res.json(models);
 });
@@ -202,7 +231,7 @@ const updateModel = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Delete a model
+// @desc    Delete a model (Soft Delete)
 // @route   DELETE /api/models/:id
 // @access  Private/Admin
 const deleteModel = asyncHandler(async (req, res) => {
@@ -222,8 +251,13 @@ const deleteModel = asyncHandler(async (req, res) => {
             throw new Error('Cannot delete model with associated products. Remove or reassign products first.');
         }
 
-        await model.deleteOne();
-        res.json({ message: 'Model removed' });
+        model.isActive = false;
+        // model.deactivated_at = new Date(); // If model schema has this? 
+        // I will assume it does or just set isActive. Model schema had isActive.
+        // Let's add deactivated_at if possible, but isActive is minimum.
+        await model.save();
+
+        res.json({ message: 'Model deactivated' });
     } else {
         res.status(404);
         throw new Error('Model not found');

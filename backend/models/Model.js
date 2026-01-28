@@ -38,15 +38,15 @@ const modelSchema = mongoose.Schema({
 // Compound unique index on make + slug
 modelSchema.index({ make: 1, slug: 1 }, { unique: true });
 
-// Pre-save hook to generate slug from name if not provided
-modelSchema.pre('save', function (next) {
-    if (!this.slug && this.name) {
-        this.slug = this.name
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-    }
-});
+// modelSchema.pre('save', function (next) {
+//     if (!this.slug && this.name) {
+//         this.slug = this.name
+//             .toLowerCase()
+//             .replace(/[^a-z0-9]+/g, '-')
+//             .replace(/^-+|-+$/g, '');
+//     }
+//     next();
+// });
 
 const Model = mongoose.model('Model', modelSchema);
 

@@ -20,29 +20,32 @@ const productSchema = mongoose.Schema({
         required: true,
     },
     images: [String],
+    // Hierarchy
+    category: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
+        required: true,
+    },
+    subcategory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Subcategory',
+        required: true,
+    },
+
     make: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
         ref: 'Make',
+        required: true,
     },
     model: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Model',
+        required: true,
     },
     compatibleModels: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Model',
     }],
-    category: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'Category',
-    },
-    subcategory: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category',
-        default: null,
-    },
     description: {
         type: String,
         required: true,
@@ -97,8 +100,23 @@ const productSchema = mongoose.Schema({
     last_zoho_modified_time: {
         type: Date,
     },
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
+    deactivated_at: {
+        type: Date,
+    },
     last_synced_at: {
         type: Date,
+    },
+    viewCount: {
+        type: Number,
+        default: 0,
+    },
+    orderCount: {
+        type: Number,
+        default: 0,
     },
 }, {
     timestamps: true,

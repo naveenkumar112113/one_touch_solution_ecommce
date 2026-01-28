@@ -66,6 +66,21 @@ const orderSchema = mongoose.Schema({
     deliveredAt: {
         type: Date,
     },
+    status: {
+        type: String,
+        enum: ['Order Placed', 'Confirmed', 'Packed', 'Dispatched', 'Out for Delivery', 'Delivered', 'Cancelled'],
+        default: 'Order Placed',
+    },
+    trackingDetails: {
+        trackingId: { type: String },
+        partner: { type: String },
+        url: { type: String },
+    },
+    statusHistory: [{
+        status: { type: String },
+        timestamp: { type: Date, default: Date.now },
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    }],
 }, {
     timestamps: true,
 });
