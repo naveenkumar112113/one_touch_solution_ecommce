@@ -3,7 +3,6 @@ const router = express.Router();
 const {
     getMakes,
     getMakeBySlug,
-    getMakesByCategory,
     createMake,
     updateMake,
     deleteMake,
@@ -13,9 +12,6 @@ const { protect, admin } = require('../middleware/authMiddleware');
 router.route('/')
     .get(getMakes)
     .post(protect, admin, createMake);
-
-router.route('/category/:categoryId')
-    .get(getMakesByCategory);
 
 router.route('/:slug')
     .get(getMakeBySlug);

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaChevronDown, FaChevronRight, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaChevronDown, FaChevronRight, FaToggleOn, FaToggleOff, FaSearch, FaLock } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import API from '../../services/api';
+import UniversalImageUpload from '../../components/common/UniversalImageUpload';
+import Button from '../../components/common/Button';
 
 const AdminCategoryListPage = () => {
     const [categories, setCategories] = useState([]);
@@ -122,142 +125,202 @@ const AdminCategoryListPage = () => {
     );
 
     if (loading) {
-        return <div className="flex justify-center items-center h-64">Loading...</div>;
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-600"></div>
+            </div>
+        );
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-slate-800">Category Management</h1>
-                <button
+        <div className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Category Management</h1>
+                    <p className="text-slate-500 text-sm mt-1">Manage your product categories and subcategories</p>
+                </div>
+
+                <Button
                     onClick={() => openCreateModal('category')}
-                    className="bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+                    className="flex items-center gap-2 shadow-lg shadow-brand-500/20"
                 >
-                    <FaPlus /> Add Category
-                </button>
+                    <FaPlus /> Add Root Category
+                </Button>
             </div>
 
             {/* Search Bar */}
-            <div className="mb-6">
-                <input
-                    type="text"
-                    placeholder="Search categories..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
-                />
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <div className="relative max-w-md">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <FaSearch />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search categories..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                    />
+                </div>
             </div>
 
             {/* Categories Table */}
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subcategories</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            <th className="px-6 py-4">Name</th>
+                            <th className="px-6 py-4">Description</th>
+                            <th className="px-6 py-4">Structure</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-slate-100">
                         {filteredCategories.map((category) => (
                             <React.Fragment key={category._id}>
-                                <tr className="hover:bg-gray-50">
+                                <motion.tr
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="hover:bg-slate-50/50 transition-colors"
+                                >
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-3">
                                             {category.subcategories && category.subcategories.length > 0 && (
                                                 <button
                                                     onClick={() => toggleExpand(category._id)}
-                                                    className="text-gray-500 hover:text-brand"
+                                                    className="w-6 h-6 flex items-center justify-center rounded-md bg-slate-100 text-slate-500 hover:bg-brand-50 hover:text-brand-600 transition-colors"
                                                 >
-                                                    {expandedCategories.has(category._id) ? <FaChevronDown /> : <FaChevronRight />}
+                                                    {expandedCategories.has(category._id) ? <FaChevronDown size={10} /> : <FaChevronRight size={10} />}
                                                 </button>
                                             )}
-                                            <span className="font-medium text-slate-800">{category.name}</span>
+
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                                                    {category.image ? (
+                                                        <img src={category.image} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-slate-400 font-bold text-xs">{category.name.charAt(0)}</span>
+                                                    )}
+                                                </div>
+                                                <span className="font-semibold text-slate-800">{category.name}</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-600">
+                                    <td className="px-6 py-4 text-slate-500 max-w-xs truncate">
                                         {category.description || '-'}
                                     </td>
-                                    <td className="px-6 py-4 text-gray-600">
-                                        {category.subcategories?.length || 0}
+                                    <td className="px-6 py-4">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                            {category.subcategories?.length || 0} Subcategories
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <button
                                             onClick={() => toggleStatus(category)}
-                                            className="flex items-center gap-1"
+                                            className="focus:outline-none transition-transform active:scale-95"
                                         >
                                             {category.isActive ? (
-                                                <><FaToggleOn className="text-2xl text-green-500" /> <span className="text-sm text-green-600">Active</span></>
+                                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 border border-green-100">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                    <span className="text-xs font-semibold text-green-700">Active</span>
+                                                </div>
                                             ) : (
-                                                <><FaToggleOff className="text-2xl text-gray-400" /> <span className="text-sm text-gray-500">Inactive</span></>
+                                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                                                    <span className="text-xs font-semibold text-slate-500">Inactive</span>
+                                                </div>
                                             )}
                                         </button>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex justify-end items-center gap-2">
                                             <button
                                                 onClick={() => openCreateModal('subcategory', category._id)}
-                                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs font-semibold flex items-center gap-1"
+                                                title="Add Subcategory"
                                             >
-                                                + Add Sub
+                                                <FaPlus size={10} /> Add Sub
                                             </button>
                                             <button
                                                 onClick={() => openEditModal(category, 'category')}
-                                                className="text-brand hover:text-brand-dark"
+                                                className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                title="Edit"
                                             >
                                                 <FaEdit />
                                             </button>
-                                            <button
-                                                onClick={() => handleDelete(category._id, category.subcategories?.length > 0)}
-                                                className="text-red-600 hover:text-red-800"
-                                            >
-                                                <FaTrash />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {/* Subcategories */}
-                                {expandedCategories.has(category._id) && category.subcategories?.map((subcat) => (
-                                    <tr key={subcat._id} className="bg-gray-50">
-                                        <td className="px-6 py-3 pl-16">
-                                            <span className="text-gray-600">↳ {subcat.name}</span>
-                                        </td>
-                                        <td className="px-6 py-3 text-gray-600 text-sm">
-                                            {subcat.description || '-'}
-                                        </td>
-                                        <td className="px-6 py-3 text-gray-600 text-sm">-</td>
-                                        <td className="px-6 py-3">
-                                            <button
-                                                onClick={() => toggleStatus(subcat)}
-                                                className="flex items-center gap-1"
-                                            >
-                                                {subcat.isActive ? (
-                                                    <><FaToggleOn className="text-xl text-green-500" /> <span className="text-xs text-green-600">Active</span></>
-                                                ) : (
-                                                    <><FaToggleOff className="text-xl text-gray-400" /> <span className="text-xs text-gray-500">Inactive</span></>
-                                                )}
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-3 text-right">
-                                            <div className="flex justify-end gap-2">
+                                            {category.is_system ? (
+                                                <div className="p-2 text-slate-300" title="System Category (Locked)">
+                                                    <FaLock size={12} />
+                                                </div>
+                                            ) : (
                                                 <button
-                                                    onClick={() => openEditModal(subcat, 'subcategory')}
-                                                    className="text-brand hover:text-brand-dark"
-                                                >
-                                                    <FaEdit />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(subcat._id, false)}
-                                                    className="text-red-600 hover:text-red-800"
+                                                    onClick={() => handleDelete(category._id, category.subcategories?.length > 0)}
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete"
                                                 >
                                                     <FaTrash />
                                                 </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            )}
+                                        </div>
+                                    </td>
+                                </motion.tr>
+
+                                {/* Subcategories Expansion */}
+                                <AnimatePresence>
+                                    {expandedCategories.has(category._id) && category.subcategories?.map((subcat) => (
+                                        <motion.tr
+                                            key={subcat._id}
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="bg-slate-50/50"
+                                        >
+                                            <td className="px-6 py-3 pl-16 relative">
+                                                <div className="absolute left-10 top-1/2 w-4 h-[1px] bg-slate-300"></div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden">
+                                                        {subcat.image ? (
+                                                            <img src={subcat.image} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="text-slate-300 text-[10px]">{subcat.name.charAt(0)}</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-slate-600 font-medium">{subcat.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3 text-slate-500 text-xs">
+                                                {subcat.description || '-'}
+                                            </td>
+                                            <td className="px-6 py-3 text-slate-400 text-xs">-</td>
+                                            <td className="px-6 py-3">
+                                                <button onClick={() => toggleStatus(subcat)}>
+                                                    {subcat.isActive ? (
+                                                        <span className="text-green-600 text-xs font-semibold">Active</span>
+                                                    ) : (
+                                                        <span className="text-slate-400 text-xs">Inactive</span>
+                                                    )}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-3 text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => openEditModal(subcat, 'subcategory')}
+                                                        className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-white rounded transition-colors"
+                                                    >
+                                                        <FaEdit size={12} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(subcat._id, false)}
+                                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded transition-colors"
+                                                    >
+                                                        <FaTrash size={12} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </AnimatePresence>
                             </React.Fragment>
                         ))}
                     </tbody>
@@ -265,70 +328,82 @@ const AdminCategoryListPage = () => {
             </div>
 
             {/* Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
-                        <h2 className="text-2xl font-bold text-slate-800 mb-6">
-                            {modalMode === 'create' ? 'Create' : 'Edit'} {modalType === 'category' ? 'Category' : 'Subcategory'}
-                        </h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <textarea
-                                    rows="3"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                                <input
-                                    type="text"
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent outline-none"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="isActive"
-                                    checked={formData.isActive}
-                                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                    className="rounded text-brand focus:ring-brand"
-                                />
-                                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Active</label>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-2 bg-brand hover:bg-brand-dark text-white rounded-lg transition"
-                                >
-                                    {modalMode === 'create' ? 'Create' : 'Update'}
-                                </button>
-                            </div>
-                        </form>
+            <AnimatePresence>
+                {showModal && (
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full"
+                        >
+                            <h2 className="text-2xl font-bold text-slate-800 mb-6 border-b border-slate-100 pb-4">
+                                {modalMode === 'create' ? 'Add New' : 'Edit'} {modalType === 'category' ? 'Category' : 'Subcategory'}
+                            </h2>
+                            <form onSubmit={handleSubmit} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Name <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+                                        placeholder="e.g., Electronics"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description</label>
+                                    <textarea
+                                        rows="3"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all resize-none"
+                                        placeholder="Brief description..."
+                                    />
+                                </div>
+                                <div>
+                                    <UniversalImageUpload
+                                        value={formData.image}
+                                        onChange={(newUrl) => setFormData({ ...formData, image: newUrl })}
+                                        label="Category Image"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.isActive}
+                                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+                                    </label>
+                                    <span className="text-sm font-medium text-slate-700">Active Status</span>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={() => setShowModal(false)}
+                                        className="flex-1"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        className="flex-1"
+                                    >
+                                        {modalMode === 'create' ? 'Create Category' : 'Save Changes'}
+                                    </Button>
+                                </div>
+                            </form>
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
         </div>
     );
 };

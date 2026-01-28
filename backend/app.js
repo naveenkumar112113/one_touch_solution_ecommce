@@ -25,9 +25,11 @@ app.use(noCache);
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/subcategories', require('./routes/subcategoryRoutes'));
 app.use('/api/makes', require('./routes/makeRoutes'));
 app.use('/api/models', require('./routes/modelRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/search', require('./routes/searchRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 const __dirname1 = path.resolve();

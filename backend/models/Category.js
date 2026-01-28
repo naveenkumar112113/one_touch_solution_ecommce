@@ -6,6 +6,11 @@ const categorySchema = mongoose.Schema({
         required: true,
         unique: true,
     },
+    slug: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
     description: {
         type: String,
     },
@@ -20,6 +25,22 @@ const categorySchema = mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true,
+    },
+    is_system: {
+        type: Boolean,
+        default: false,
+    },
+    key: {
+        type: String,
+        unique: true,
+        sparse: true,
+    },
+    sort_order: {
+        type: Number,
+        default: 0,
+    },
+    deactivated_at: {
+        type: Date,
     }
 }, {
     timestamps: true,
@@ -29,9 +50,20 @@ const categorySchema = mongoose.Schema({
 
 // Virtual for subcategories
 categorySchema.virtual('subcategories', {
-    ref: 'Category',
+    ref: 'Subcategory',
     localField: '_id',
-    foreignField: 'parent'
+    foreignField: 'category'
+});
+
+// Pre-save hook to generate slug
+categorySchema.pre('save', function (next) {
+    if ((this.isModified('name') || this.isNew) && !this.slug) {
+        this.slug = this.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+    next();
 });
 
 const Category = mongoose.model('Category', categorySchema);

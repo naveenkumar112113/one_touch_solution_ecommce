@@ -28,7 +28,8 @@ const getCategoryById = asyncHandler(async (req, res) => {
 // @route   GET /api/categories/:id/subcategories
 // @access  Public
 const getSubcategories = asyncHandler(async (req, res) => {
-    const subcategories = await Category.find({ parent: req.params.id });
+    const Subcategory = require('../models/Subcategory');
+    const subcategories = await Subcategory.find({ category: req.params.id });
     res.json(subcategories);
 });
 
@@ -56,6 +57,7 @@ const createCategory = asyncHandler(async (req, res) => {
 
     const category = await Category.create({
         name,
+        slug: req.body.slug, // Optional manual slug
         description,
         image,
         parent: parent || null,
@@ -74,6 +76,12 @@ const updateCategory = asyncHandler(async (req, res) => {
     const category = await Category.findById(req.params.id);
 
     if (category) {
+        // Prevent renaming system categories
+        if (category.is_system && name && name !== category.name) {
+            res.status(400);
+            throw new Error('System categories cannot be renamed');
+        }
+
         // Check if new name conflicts with existing category (excluding current)
         if (name && name !== category.name) {
             const nameExists = await Category.findOne({ name });
@@ -89,11 +97,22 @@ const updateCategory = asyncHandler(async (req, res) => {
             throw new Error('Category cannot be its own parent');
         }
 
+        if (name && name !== category.name) {
+            category.slug = undefined; // Trigger regeneration
+        }
+
         category.name = name || category.name;
+        category.slug = req.body.slug || category.slug;
         category.description = description !== undefined ? description : category.description;
         category.image = image !== undefined ? image : category.image;
         category.isActive = isActive !== undefined ? isActive : category.isActive;
         category.parent = parent !== undefined ? parent : category.parent;
+
+        if (isActive === false) {
+            category.deactivated_at = new Date();
+        } else if (isActive === true) {
+            category.deactivated_at = null;
+        }
 
         const updatedCategory = await category.save();
         res.json(updatedCategory);
@@ -103,15 +122,22 @@ const updateCategory = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Delete a category
+// @desc    Delete a category (Soft Delete)
 // @route   DELETE /api/categories/:id
 // @access  Private/Admin
 const deleteCategory = asyncHandler(async (req, res) => {
     const category = await Category.findById(req.params.id);
 
     if (category) {
+        // Prevent deleting system categories
+        if (category.is_system) {
+            res.status(400);
+            throw new Error('System categories cannot be deleted');
+        }
+
         // Check if category has subcategories
-        const subcategories = await Category.find({ parent: req.params.id });
+        const Subcategory = require('../models/Subcategory');
+        const subcategories = await Subcategory.find({ category: req.params.id });
         if (subcategories.length > 0) {
             res.status(400);
             throw new Error('Cannot delete category with subcategories. Delete subcategories first.');
@@ -124,8 +150,32 @@ const deleteCategory = asyncHandler(async (req, res) => {
             throw new Error('Cannot delete category with associated products. Remove or reassign products first.');
         }
 
-        await category.deleteOne();
-        res.json({ message: 'Category removed' });
+        // Soft delete instead of hard delete
+        category.isActive = false;
+        category.deactivated_at = new Date();
+        await category.save();
+
+        res.json({ message: 'Category deactivated' });
+    } else {
+        res.status(404);
+        throw new Error('Category not found');
+    }
+});
+
+// @desc    Get category by slugOrKey
+// @route   GET /api/categories/slug/:slug
+// @access  Public
+const getCategoryBySlug = asyncHandler(async (req, res) => {
+    // Try to find by slug first, then key
+    const category = await Category.findOne({
+        $or: [
+            { slug: req.params.slug },
+            { key: req.params.slug }
+        ]
+    }).populate('subcategories');
+
+    if (category) {
+        res.json(category);
     } else {
         res.status(404);
         throw new Error('Category not found');
@@ -135,6 +185,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
 module.exports = {
     getCategories,
     getCategoryById,
+    getCategoryBySlug, // Added
     getSubcategories,
     createCategory,
     updateCategory,

@@ -31,7 +31,7 @@ const protect = asyncHandler(async (req, res, next) => {
 });
 
 const admin = (req, res, next) => {
-    if (req.user && req.user.isAdmin) {
+    if (req.user && req.user.role === 'SUPER_ADMIN') {
         next();
     } else {
         res.status(401);
@@ -39,4 +39,19 @@ const admin = (req, res, next) => {
     }
 };
 
-module.exports = { protect, admin };
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            res.status(401);
+            throw new Error('Not authorized, no user found');
+        }
+        if (req.user.role === 'SUPER_ADMIN' || roles.includes(req.user.role)) {
+            next();
+        } else {
+            res.status(403);
+            throw new Error(`User role ${req.user.role} is not authorized to access this route`);
+        }
+    };
+};
+
+module.exports = { protect, admin, authorize };

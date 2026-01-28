@@ -8,6 +8,10 @@ dotenv.config();
 // Connect to database
 connectDB();
 
+// Initialize Cron Jobs
+const { initCronJobs } = require('./services/cronService');
+initCronJobs();
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

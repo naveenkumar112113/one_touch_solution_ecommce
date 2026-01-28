@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import API from '../../services/api';
+import UniversalImageUpload from '../../components/common/UniversalImageUpload';
 
 const AdminProductEditPage = () => {
     const { id } = useParams();
@@ -233,14 +234,10 @@ const AdminProductEditPage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL *</label>
-                        <input
-                            type="text"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-transparent outline-none transition"
+                        <UniversalImageUpload
                             value={image}
-                            onChange={(e) => setImage(e.target.value)}
-                            placeholder="https://example.com/image.jpg"
-                            required
+                            onChange={setImage}
+                            label="Product Image *"
                         />
                     </div>
 

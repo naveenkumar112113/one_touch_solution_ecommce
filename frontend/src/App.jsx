@@ -6,7 +6,10 @@ import ContactPage from './pages/user/ContactPage';
 import LoginPage from './pages/user/LoginPage';
 import ProductPage from './pages/user/ProductPage';
 import ProductDetailsPage from './pages/user/ProductDetailsPage';
+import ProductListPage from './pages/user/ProductListPage';
 import CategoryPage from './pages/user/CategoryPage';
+import SubcategoryPage from './pages/user/SubcategoryPage';
+import SearchResultsPage from './pages/user/SearchResultsPage';
 import RegisterPage from './pages/user/RegisterPage';
 import MakeBrowsePage from './pages/user/MakeBrowsePage';
 import MakeListPage from './pages/user/MakeListPage';
@@ -25,8 +28,6 @@ import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import CartPage from './pages/user/CartPage';
 
-// ... (existing imports)
-
 function App() {
   return (
     <AuthProvider>
@@ -39,6 +40,17 @@ function App() {
               <Route path="/products" element={<ProductPage />} />
               <Route path="/product/:slug" element={<ProductDetailsPage />} />
               <Route path="/categories" element={<CategoryPage />} />
+              <Route path="/search" element={<SearchResultsPage />} />
+              <Route path="/categories/:categorySlug/:subcategorySlug" element={<SubcategoryPage />} />
+              <Route path="/categories/:slug" element={<CategoryPage />} />
+
+              {/* Product Listing Pages (Verticals) */}
+              <Route path="/products/mobile" element={<ProductListPage vertical="mobile" />} />
+              <Route path="/products/laptop-computer" element={<ProductListPage vertical="laptop" />} />
+              <Route path="/products/cctv" element={<ProductListPage vertical="cctv" />} />
+              <Route path="/products" element={<ProductListPage />} />{/* General fallback */}
+
+              <Route path="/search" element={<SearchResultsPage />} />
 
               {/* Make-based navigation */}
               <Route path="/makes" element={<MakeBrowsePage />} />
@@ -56,10 +68,11 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
             </Route>
 
-            {/* Admin Routes - Wrapped in AdminLayout */}
+            {/* Admin Routes - Protected by AdminRoute */}
+
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboardPage />} />
-              <Route path="products" element={<AdminProductListPage />} />
+              <Route path="/admin/products" element={<AdminProductListPage />} />
               <Route path="product/:id/edit" element={<AdminProductEditPage />} />
               <Route path="product/new" element={<AdminProductEditPage />} />
               <Route path="orders" element={<AdminOrderListPage />} />
