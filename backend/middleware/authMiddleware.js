@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler');
+
 const User = require('../models/User');
 
-const protect = asyncHandler(async (req, res, next) => {
+const protect = async (req, res, next) => {
     let token;
 
     if (
@@ -28,9 +28,9 @@ const protect = asyncHandler(async (req, res, next) => {
         res.status(401);
         throw new Error('Not authorized, no token');
     }
-});
+};
 
-const admin = (req, res, next) => {
+const admin = async (req, res, next) => {
     if (req.user && req.user.role === 'SUPER_ADMIN') {
         next();
     } else {
