@@ -30,6 +30,7 @@ app.use('/api/makes', require('./routes/makeRoutes'));
 app.use('/api/models', require('./routes/modelRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/search', require('./routes/searchRoutes'));
+app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 const __dirname1 = path.resolve();
