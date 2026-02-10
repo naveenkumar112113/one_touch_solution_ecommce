@@ -14,6 +14,9 @@ import RegisterPage from './pages/user/RegisterPage';
 import MakeBrowsePage from './pages/user/MakeBrowsePage';
 import MakeListPage from './pages/user/MakeListPage';
 import ModelListPage from './pages/user/ModelListPage';
+import ProfilePage from './pages/user/ProfilePage';
+import OrderListPage from './pages/user/OrderListPage';
+import OrderDetailPage from './pages/user/OrderDetailPage';
 
 import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
@@ -66,6 +69,9 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/account/orders" element={<OrderListPage />} />
+              <Route path="/account/orders/:id" element={<OrderDetailPage />} />
             </Route>
 
             {/* Admin Routes - Protected by AdminRoute */}
