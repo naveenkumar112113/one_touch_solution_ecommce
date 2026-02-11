@@ -45,10 +45,20 @@ const createSubcategory = asyncHandler(async (req, res) => {
         throw new Error('Subcategory already exists');
     }
 
+    const Category = require('../models/Category');
+    const parentCategory = await Category.findById(category);
+    if (!parentCategory) {
+        res.status(400);
+        throw new Error('Parent category not found');
+    }
+
+    const slug = await generateSlug(name, Subcategory);
+
     const subcategory = await Subcategory.create({
         name,
+        slug,
         category,
-        categoryKey,
+        categoryKey: categoryKey || parentCategory.key || parentCategory.slug, // Fallback to key or slug
         logo
     });
 
@@ -72,7 +82,7 @@ const updateSubcategory = asyncHandler(async (req, res) => {
 
         // Note: slug auto-update logic might be needed if name changes, usually pre-save handles it if we clear slug
         if (name && name !== subcategory.name) {
-            subcategory.slug = undefined;
+            subcategory.slug = await generateSlug(name, Subcategory);
         }
 
         const updatedSubcategory = await subcategory.save();

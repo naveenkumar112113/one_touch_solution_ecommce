@@ -122,15 +122,18 @@ const ProductFormModal = ({ product, onClose, onSuccess }) => {
         if (!name) return setError('Name is required');
         if (!price) return setError('Price is required');
         if (!category) return setError('Category is required');
-        // if (!make) return setError('Make (Brand) is required'); 
-        // Note: Some requirements imply strict hierarchy, others imply flexibility. 
-        // Prompt says: "Validate category_id exists", "Validate model_id exists"
-        // Wait, "Validate model_id exists"? Does that mean Model is REQUIRED?
-        // Prompt: "Product must link to model". So YES, model is likely required or strongly encouraged.
-        // But let's allow optional if not strictly enforced by backend yet, but user prompt says "Product not being inserted... Fix Required... Validate model_id exists".
-        // I will enforce Model if Make is selected, or enforce Make/Model always?
-        // Let's enforce Model.
-        if (!model) return setError('Model is required');
+
+        // Check if category requires model
+        // We need the category OBJECT to check name/slug.
+        // 'category' state is just ID. find it in 'categories' array.
+        const selectedCat = categories.find(c => c._id === category);
+        const strictModelCategories = ['mobile_parts', 'mobile_case', 'laptop_computer_parts'];
+        const isStrictCategory = selectedCat && (
+            strictModelCategories.includes(selectedCat.key) ||
+            strictModelCategories.includes(selectedCat.slug)
+        );
+
+        if (isStrictCategory && !model) return setError('Model is required for this category');
 
         setLoading(true);
 
@@ -267,13 +270,20 @@ const ProductFormModal = ({ product, onClose, onSuccess }) => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Model *</label>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                                        Model {
+                                            (() => {
+                                                const cat = categories.find(c => c._id === category);
+                                                const strict = ['mobile_parts', 'mobile_case', 'laptop_computer_parts'];
+                                                return cat && (strict.includes(cat.key) || strict.includes(cat.slug)) ? '*' : '(Optional)';
+                                            })()
+                                        }
+                                    </label>
                                     <select
                                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-400"
                                         value={model}
                                         onChange={(e) => setModel(e.target.value)}
                                         disabled={!make}
-                                        required
                                     >
                                         <option value="">Select Model</option>
                                         {models.map((mdl) => (

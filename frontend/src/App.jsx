@@ -22,6 +22,7 @@ import AdminLayout from './components/layout/AdminLayout';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminProductListPage from './pages/admin/AdminProductListPage';
 import AdminProductEditPage from './pages/admin/AdminProductEditPage';
+import BulkUploadPage from './pages/admin/BulkUploadPage';
 import AdminOrderListPage from './pages/admin/AdminOrderListPage';
 import AdminCategoryListPage from './pages/admin/AdminCategoryListPage';
 import AdminMakeListPage from './pages/admin/AdminMakeListPage';
@@ -79,6 +80,7 @@ function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/products" element={<AdminProductListPage />} />
+              <Route path="products/bulk" element={<BulkUploadPage />} />
               <Route path="product/:id/edit" element={<AdminProductEditPage />} />
               <Route path="product/new" element={<AdminProductEditPage />} />
               <Route path="orders" element={<AdminOrderListPage />} />

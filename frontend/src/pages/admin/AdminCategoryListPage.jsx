@@ -64,17 +64,17 @@ const AdminCategoryListPage = () => {
         setShowModal(true);
     };
 
-    const openEditModal = (category, type = 'category') => {
+    const openEditModal = (item, type = 'category') => {
         setModalMode('edit');
         setModalType(type);
         setFormData({
-            name: category.name,
-            description: category.description || '',
-            image: category.image || '',
-            parent: category.parent || null,
-            isActive: category.isActive !== undefined ? category.isActive : true
+            name: item.name,
+            description: item.description || '',
+            image: type === 'subcategory' ? (item.logo || '') : (item.image || ''),
+            parent: item.category || item.parent || null, // Handle both category ID field names
+            isActive: item.isActive !== undefined ? item.isActive : true
         });
-        setSelectedCategory(category);
+        setSelectedCategory(item);
         setShowModal(true);
     };
 
@@ -82,9 +82,35 @@ const AdminCategoryListPage = () => {
         e.preventDefault();
         try {
             if (modalMode === 'create') {
-                await API.post('/categories', formData);
+                if (modalType === 'subcategory') {
+                    await API.post('/subcategories', {
+                        name: formData.name,
+                        description: formData.description,
+                        image: formData.image, // Mapped to 'logo' in backend if needed? Backend schema says 'logo', frontend says 'image'. 
+                        // Wait, controller uses 'logo', frontend uses 'image'. Controller: const { name, category, categoryKey, logo } = req.body;
+                        // I should map image -> logo for subcategory? Or just send both?
+                        // Let's check Subcategory model... Assuming it has 'image' or 'logo'. seeder.js used 'logo' in comment but passed it?
+                        // Controller says: const { name, logo... } = req.body.
+                        // I will send as logo.
+                        logo: formData.image,
+                        category: formData.parent, // Parent ID
+                        isActive: formData.isActive
+                    });
+                } else {
+                    await API.post('/categories', formData);
+                }
             } else {
-                await API.put(`/categories/${selectedCategory._id}`, formData);
+                if (modalType === 'subcategory') {
+                    await API.put(`/subcategories/${selectedCategory._id}`, {
+                        name: formData.name,
+                        logo: formData.image,
+                        isActive: formData.isActive,
+                        // Update parent if changed? Form doesn't allow changing parent cleanly yet, but let's send it.
+                        category: formData.parent
+                    });
+                } else {
+                    await API.put(`/categories/${selectedCategory._id}`, formData);
+                }
             }
             setShowModal(false);
             fetchCategories();
@@ -93,26 +119,31 @@ const AdminCategoryListPage = () => {
         }
     };
 
-    const handleDelete = async (categoryId, hasSubcategories) => {
-        if (hasSubcategories) {
+    const handleDelete = async (id, isSubcategory = false, hasChildren = false) => {
+        if (!isSubcategory && hasChildren) {
             alert('Cannot delete category with subcategories. Delete subcategories first.');
             return;
         }
-        if (window.confirm('Are you sure you want to delete this category?')) {
+        if (window.confirm(`Are you sure you want to delete this ${isSubcategory ? 'subcategory' : 'category'}?`)) {
             try {
-                await API.delete(`/categories/${categoryId}`);
+                if (isSubcategory) {
+                    await API.delete(`/subcategories/${id}`);
+                } else {
+                    await API.delete(`/categories/${id}`);
+                }
                 fetchCategories();
             } catch (error) {
-                alert(error.response?.data?.message || 'Error deleting category');
+                alert(error.response?.data?.message || 'Error deleting item');
             }
         }
     };
 
-    const toggleStatus = async (category) => {
+    const toggleStatus = async (item, isSubcategory = false) => {
         try {
-            await API.put(`/categories/${category._id}`, {
-                ...category,
-                isActive: !category.isActive
+            const endpoint = isSubcategory ? `/subcategories/${item._id}` : `/categories/${item._id}`;
+            await API.put(endpoint, {
+                ...item,
+                isActive: !item.isActive
             });
             fetchCategories();
         } catch (error) {
@@ -217,7 +248,7 @@ const AdminCategoryListPage = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <button
-                                            onClick={() => toggleStatus(category)}
+                                            onClick={() => toggleStatus(category, false)}
                                             className="focus:outline-none transition-transform active:scale-95"
                                         >
                                             {category.isActive ? (
@@ -255,7 +286,7 @@ const AdminCategoryListPage = () => {
                                                 </div>
                                             ) : (
                                                 <button
-                                                    onClick={() => handleDelete(category._id, category.subcategories?.length > 0)}
+                                                    onClick={() => handleDelete(category._id, false, category.subcategories?.length > 0)}
                                                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Delete"
                                                 >
@@ -294,7 +325,7 @@ const AdminCategoryListPage = () => {
                                             </td>
                                             <td className="px-6 py-3 text-slate-400 text-xs">-</td>
                                             <td className="px-6 py-3">
-                                                <button onClick={() => toggleStatus(subcat)}>
+                                                <button onClick={() => toggleStatus(subcat, true)}>
                                                     {subcat.isActive ? (
                                                         <span className="text-green-600 text-xs font-semibold">Active</span>
                                                     ) : (
@@ -311,7 +342,7 @@ const AdminCategoryListPage = () => {
                                                         <FaEdit size={12} />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(subcat._id, false)}
+                                                        onClick={() => handleDelete(subcat._id, true)}
                                                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded transition-colors"
                                                     >
                                                         <FaTrash size={12} />
