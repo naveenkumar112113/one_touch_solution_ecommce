@@ -40,7 +40,7 @@ const productSchema = mongoose.Schema({
     model: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Model',
-        required: true,
+        required: false, // Changed to false for conditional validation
     },
     compatibleModels: [{
         type: mongoose.Schema.Types.ObjectId,

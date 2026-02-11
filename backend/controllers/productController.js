@@ -268,6 +268,16 @@ const createProduct = asyncHandler(async (req, res) => {
     }
 
     // 5. Validate Model
+    const strictModelCategories = ['mobile_parts', 'mobile_case', 'laptop_computer_parts'];
+
+    // Check if category requires model
+    const isStrictCategory = strictModelCategories.includes(categoryExists.key) || strictModelCategories.includes(categoryExists.slug);
+
+    if (isStrictCategory && !model) {
+        res.status(400);
+        throw new Error('Model is required for this category');
+    }
+
     if (model) {
         const modelExists = await Model.findById(model);
         if (!modelExists) {
@@ -334,7 +344,36 @@ const updateProduct = asyncHandler(async (req, res) => {
             }
         }
 
-        // Validate model if provided
+        // Validate model if provided OR if category is changing/strict
+        // If category is being updated, check if new category requires model
+        // If model is being removed (set to null), check if current/new category requires it
+        // This is complex because we need to know the FINAL category.
+
+        const finalCategoryId = category || product.category;
+        const finalCategory = await Category.findById(finalCategoryId); // optimizing: if category provided, we fetched it above. if not, fetch now or use product.category (but need doc).
+        // Reuse categoryExists if available
+
+        // Let's simplify: if model is provided, validate it. 
+        // If model is NOT provided (undefined), no change. 
+        // If model is explicitly null, check strictness?
+        // User might not send explicit null to remove.
+        // But if they change category to "Mobile", they SHOULD provide a model if it was missing?
+        // Ideally frontend handles this. Backend should just ensure data consistency.
+
+        const strictModelCategories = ['mobile_parts', 'mobile_case', 'laptop_computer_parts'];
+        const isStrictCategory = finalCategory && (strictModelCategories.includes(finalCategory.key) || strictModelCategories.includes(finalCategory.slug));
+
+        if (isStrictCategory && !model && !product.model) {
+            // If strict, and no new model provided, and no existing model.
+            // But 'model' undefined means no update.
+            // We only care if they are TRYING to save an invalid state?
+            // Or if they are updating category to strict one.
+            if (category) { // Category is changing to strict
+                res.status(400);
+                throw new Error('Model is required for this category');
+            }
+        }
+
         if (model) {
             const modelExists = await Model.findById(model);
             if (!modelExists) {
@@ -756,6 +795,124 @@ const getSmartFilters = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Export Products to CSV
+// @route   GET /api/products/export
+// @access  Private/Admin
+const exportProducts = asyncHandler(async (req, res) => {
+    const products = await Product.find({}).populate('category subcategory make model');
+    const { generateCSV } = require('../utils/csvUtils');
+
+    const flattenProducts = products.map(p => ({
+        _id: p._id,
+        name: p.name,
+        price: p.price,
+        countInStock: p.countInStock,
+        category: p.category?.name || '',
+        subcategory: p.subcategory?.name || '',
+        make: p.make?.name || '',
+        model: p.model?.name || '',
+        sku: p.sku || '',
+        description: p.description
+    }));
+
+    const fields = ['_id', 'name', 'price', 'countInStock', 'category', 'subcategory', 'make', 'model', 'sku', 'description'];
+    const csv = generateCSV(flattenProducts, fields);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('products.csv');
+    res.send(csv);
+});
+
+// @desc    Import Products from CSV
+// @route   POST /api/products/import
+// @access  Private/Admin
+const importProducts = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        res.status(400);
+        throw new Error('No file uploaded');
+    }
+
+    const { parseCSV } = require('../utils/csvUtils');
+    const productsToCheck = await parseCSV(req.file.path);
+
+    const Category = require('../models/Category');
+    const Make = require('../models/Make');
+    const Model = require('../models/Model');
+
+    // Simple import strategy: Create new if ID not present? Or just create all?
+    // User asked for "mapping", which implies advanced UI.
+    // For now, assume CSV headers match our fields or mapped in frontend?
+    // Let's assume CSV has: name, price, categoryName, makeName, etc.
+    // Backend needs to resolve names to IDs.
+
+    let createdCount = 0;
+    const errors = [];
+
+    for (const p of productsToCheck) {
+        try {
+            // Resolver logic (simplified)
+            let categoryId, makeId, modelId;
+
+            if (p.category) {
+                const cat = await Category.findOne({ name: { $regex: new RegExp(`^${p.category}$`, 'i') } });
+                if (cat) categoryId = cat._id;
+            }
+            if (p.make) {
+                const mk = await Make.findOne({ name: { $regex: new RegExp(`^${p.make}$`, 'i') } });
+                if (mk) makeId = mk._id;
+            }
+
+            // Create
+            if (p.name && p.price && categoryId && makeId) {
+                await Product.create({
+                    name: p.name,
+                    price: Number(p.price),
+                    countInStock: Number(p.countInStock) || 0,
+                    category: categoryId,
+                    make: makeId,
+                    description: p.description || p.name,
+                    user: req.user._id,
+                    image: '/images/sample.jpg' // Default or placeholder
+                });
+                createdCount++;
+            } else {
+                errors.push(`Skipped ${p.name}: Missing required fields or invalid Relations`);
+            }
+        } catch (err) {
+            errors.push(`Error importing ${p.name}: ${err.message}`);
+        }
+    }
+
+    res.json({ message: 'Import Processed', createdCount, errors });
+});
+
+// @desc    Get Sample CSV for Import
+// @route   GET /api/products/sample-csv
+// @access  Private/Admin
+const getSampleCSV = asyncHandler(async (req, res) => {
+    const fields = ['name', 'price', 'countInStock', 'category', 'subcategory', 'make', 'model', 'sku', 'description'];
+    const exampleData = [
+        {
+            name: 'Sample Product Name',
+            price: 999,
+            countInStock: 10,
+            category: 'Mobile Parts',
+            subcategory: 'LCD Screen',
+            make: 'Samsung',
+            model: 'Galaxy S21',
+            sku: 'SAM-S21-LCD',
+            description: 'Original LCD Screen for Samsung Galaxy S21'
+        }
+    ];
+
+    const { generateCSV } = require('../utils/csvUtils');
+    const csv = generateCSV(exampleData, fields);
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('products_sample.csv');
+    res.send(csv);
+});
+
 module.exports = {
     getProducts,
     getProductById,
@@ -766,5 +923,8 @@ module.exports = {
     syncProducts,
     searchZohoItems,
     getFilters,
-    getSmartFilters
+    getSmartFilters,
+    exportProducts,
+    importProducts,
+    getSampleCSV
 };

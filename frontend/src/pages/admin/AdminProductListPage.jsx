@@ -102,6 +102,13 @@ const AdminProductListPage = () => {
                         <FaSync className={syncLoading ? 'animate-spin' : ''} />
                         <span>{syncLoading ? 'Syncing...' : 'Fetch Latest Items & Stock'}</span>
                     </button>
+                    <Link
+                        to="/admin/products/bulk"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition"
+                    >
+                        <FaSync />
+                        <span>Bulk Import/Export</span>
+                    </Link>
                     <button
                         onClick={handleCreate}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition"
