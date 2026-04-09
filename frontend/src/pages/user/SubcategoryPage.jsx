@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import API from '../../services/api';
 
 // Product Card Component (Internal for now)
 const ProductCard = ({ product }) => (
@@ -40,14 +40,14 @@ const SubcategoryPage = () => {
                 // 1. Fetch Subcategory Details using slug
                 // We assume backend has /api/subcategories/slug/:slug
                 // Or filtered by category if slug is not unique globally? Slugs should be unique.
-                const subRes = await axios.get(`/api/subcategories/slug/${subcategorySlug}`);
+                const subRes = await API.get(`/subcategories/slug/${subcategorySlug}`);
                 const subData = subRes.data;
                 setSubcategory(subData);
 
                 if (subData) {
                     // 2. Fetch Products
                     // Filter by subcategory ID or Slug
-                    const prodRes = await axios.get(`/api/products?subcategorySlug=${subData.slug}`);
+                    const prodRes = await API.get(`/products?subcategorySlug=${subData.slug}`);
                     setProducts(prodRes.data.products || prodRes.data || []);
                 }
                 setLoading(false);

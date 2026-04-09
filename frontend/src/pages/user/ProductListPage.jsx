@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import API from '../../services/api';
 import { motion } from 'framer-motion';
 import { FaFilter } from 'react-icons/fa';
 import ProductGrid from '../../components/product/ProductGrid';
@@ -60,7 +60,7 @@ const ProductListPage = ({ vertical }) => {
                 const query = new URLSearchParams(filters);
                 if (vertical) query.set('group', vertical);
 
-                const { data } = await axios.get(`/api/products?${query.toString()}`);
+                const { data } = await API.get(`/products?${query.toString()}`);
 
                 if (data.products) {
                     setProducts(data.products);
@@ -87,7 +87,7 @@ const ProductListPage = ({ vertical }) => {
                     modelSlug: filters.modelSlug || ''
                 });
 
-                const { data } = await axios.get(`/api/products/filters/smart?${metaQuery.toString()}`);
+                const { data } = await API.get(`/products/filters/smart?${metaQuery.toString()}`);
                 setFilterMeta(data);
 
                 // Auto-Cleanup: If current selections are invalid according to backend options, remove them.

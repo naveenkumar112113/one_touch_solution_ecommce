@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import API from '../../services/api';
 
 // Skeleton Component
 const CategorySkeleton = () => (
@@ -19,7 +19,7 @@ const CategoryGrid = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const { data } = await axios.get('/api/categories');
+                const { data } = await API.get('/categories');
                 // Filter active categories if needed, or assume backend sends all and we show all or just active?
                 // Usually for user facing, we might want only active.
                 // If backend supports isActive, let's filter.

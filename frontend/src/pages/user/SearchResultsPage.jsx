@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import API from '../../services/api';
 import { motion } from 'framer-motion';
 import { FaMobileAlt, FaBox } from 'react-icons/fa';
 
@@ -38,7 +38,7 @@ const SearchResultsPage = () => {
                 // For now, using the same endpoint. If specific requirements arise, I'll add limit param.
                 // Re-using same processing logic as GlobalSearch but maybe backend should accept limit.
                 // But let's assume the user accepted the plan which used same endpoint.
-                const { data } = await axios.get(`/api/search?q=${query}`);
+                const { data } = await API.get(`/search?q=${query}`);
                 setResults(data);
             } catch (error) {
                 console.error('Search error:', error);

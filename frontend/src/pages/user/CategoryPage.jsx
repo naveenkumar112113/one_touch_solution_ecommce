@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import API from '../../services/api';
 import CategoryGrid from '../../components/common/CategoryGrid'; // Ensure this path is correct if reusing or remove if not needed for this page
 // Actually, we are building a specific Category Page here, so likely we want a specific Subcategory Grid + Product Grid.
 
@@ -47,7 +47,7 @@ const CategoryPage = () => {
             setLoading(true);
             try {
                 // 1. Fetch Category Details
-                const catRes = await axios.get(`/api/categories/slug/${slug}`);
+                const catRes = await API.get(`/categories/slug/${slug}`);
                 const catData = catRes.data;
                 setCategory(catData);
 
@@ -55,11 +55,11 @@ const CategoryPage = () => {
                     // 2. Fetch Subcategories (Product Types)
                     // Filter by categoryKey if available, or Slug (assuming they match for now, or backend handles it)
                     // The backend expects 'category' query param which maps to 'categoryKey'
-                    const subRes = await axios.get(`/api/subcategories?category=${catData.key || catData.slug}`);
+                    const subRes = await API.get(`/subcategories?category=${catData.key || catData.slug}`);
                     setSubcategories(subRes.data);
 
                     // 3. Fetch Products
-                    const prodRes = await axios.get(`/api/products?categoryKey=${catData.key || catData.slug}`);
+                    const prodRes = await API.get(`/products?categoryKey=${catData.key || catData.slug}`);
                     setProducts(prodRes.data.products || prodRes.data || []);
                 }
                 setLoading(false);
