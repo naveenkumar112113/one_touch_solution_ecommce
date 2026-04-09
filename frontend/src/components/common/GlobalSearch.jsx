@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaSearch, FaTimes, FaMobileAlt, FaBox } from 'react-icons/fa';
-import axios from 'axios';
+import API from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const GlobalSearch = () => {
@@ -33,7 +33,7 @@ const GlobalSearch = () => {
 
             setLoading(true);
             try {
-                const { data } = await axios.get(`/api/search?q=${query}`);
+                const { data } = await API.get(`/search?q=${query}`);
                 setResults(data);
                 setShowSuggestions(true);
             } catch (error) {
