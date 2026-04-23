@@ -19,4 +19,17 @@ API.interceptors.request.use(
     }
 );
 
+// Add a response interceptor to handle 401 global errors
+API.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            console.error('JWT Token expired or invalid. Logging out.');
+            localStorage.removeItem('userInfo');
+            window.location.href = '/login'; // Redirect to login page
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default API;
