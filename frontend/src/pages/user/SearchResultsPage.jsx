@@ -2,26 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../../services/api';
 import { motion } from 'framer-motion';
-import { FaMobileAlt, FaBox } from 'react-icons/fa';
+import { FaMobileAlt, FaBox, FaSearch } from 'react-icons/fa';
 import SafeImage from '../../components/common/SafeImage';
-
-// Reusing ProductCard or creating a simple one
-const ProductCard = ({ product }) => (
-    <Link to={`/product/${product.slug}`} className="block">
-        <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 border border-slate-100 flex flex-col h-full">
-            <div className="h-40 mb-4 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
-                <SafeImage src={product.image} alt={product.name} className="h-full w-full object-contain" />
-            </div>
-            <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 mb-1 line-clamp-2">{product.name}</h3>
-                <p className="text-sm text-slate-500 mb-2">{product.brand?.name} • {product.model?.name}</p>
-            </div>
-            <div className="mt-auto pt-3 border-t border-slate-50 flex justify-between items-center">
-                <span className="font-bold text-brand-600">₹{product.price}</span>
-            </div>
-        </div>
-    </Link>
-);
+import ProductCard from '../../components/product/ProductCard';
 
 const SearchResultsPage = () => {
     const [searchParams] = useSearchParams();
@@ -34,11 +17,6 @@ const SearchResultsPage = () => {
             if (!query) return;
             setLoading(true);
             try {
-                // Remove limit for full page results or use pagination (defaulting to API limit for now, maybe increase?)
-                // API currently limits to 5. We might need a separate 'limit' param or a new endpoint for full results.
-                // For now, using the same endpoint. If specific requirements arise, I'll add limit param.
-                // Re-using same processing logic as GlobalSearch but maybe backend should accept limit.
-                // But let's assume the user accepted the plan which used same endpoint.
                 const { data } = await API.get(`/search?q=${query}`);
                 setResults(data);
             } catch (error) {
@@ -52,61 +30,118 @@ const SearchResultsPage = () => {
     }, [query]);
 
     if (!query) {
-        return <div className="text-center py-20">Please enter a search term</div>;
+        return (
+            <div className="bg-[#F8FAFC] min-h-screen py-24 flex justify-center items-start font-sans">
+                <div className="text-center bg-white p-10 rounded-[24px] shadow-sm max-w-md w-full mx-4">
+                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <FaSearch className="text-3xl text-slate-300" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Search Products</h2>
+                    <p className="text-slate-500">Please enter a search term to find models and parts.</p>
+                </div>
+            </div>
+        );
     }
 
     if (loading) {
-        return <div className="text-center py-20">Loading results for "{query}"...</div>;
+        return (
+            <div className="bg-[#F8FAFC] min-h-screen py-24 flex flex-col items-center font-sans">
+                <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin mb-4"></div>
+                <p className="text-slate-500 font-medium">Searching for "{query}"...</p>
+            </div>
+        );
     }
 
     const hasResults = results.models.length > 0 || results.products.length > 0;
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-6">Search Results for "{query}"</h1>
-
-            {!hasResults && (
-                <div className="text-center py-12 bg-slate-50 rounded-xl">
-                    <p className="text-slate-500">No results found.</p>
+        <div className="bg-[#F8FAFC] min-h-screen pb-20 font-sans">
+            {/* Header */}
+            <div className="bg-white border-b border-slate-200 py-10">
+                <div className="container mx-auto px-4 max-w-7xl">
+                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 tracking-tight">
+                        Search Results for <span className="text-brand-600">"{query}"</span>
+                    </h1>
+                    <p className="text-slate-500 text-lg">
+                        Found {results.models.length} models and {results.products.length} products.
+                    </p>
                 </div>
-            )}
+            </div>
 
-            {/* Models Section */}
-            {results.models.length > 0 && (
-                <div className="mb-10">
-                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <FaMobileAlt /> Matching Models
-                    </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {results.models.map((model) => (
-                            <Link
-                                key={model._id}
-                                to={`/make/${model.brand?.slug || 'unknown'}/model/${model.slug}/products`}
-                                className="bg-white border border-slate-100 rounded-xl p-4 text-center hover:shadow-md transition-all hover:border-brand-500 block"
-                            >
-                                <div className="h-16 w-16 mx-auto bg-slate-50 rounded-lg flex items-center justify-center mb-3">
-                                    {model.image ? <SafeImage src={model.image} alt={model.name} className="h-full w-full object-contain" /> : <FaMobileAlt className="text-2xl text-slate-400" />}
+            <div className="container mx-auto px-4 max-w-7xl mt-12">
+                {!hasResults && (
+                    <div className="text-center py-24 bg-white rounded-[24px] border border-dashed border-slate-200 shadow-sm">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <FaSearch className="text-2xl text-slate-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">No results found</h3>
+                        <p className="text-slate-500 mb-6">We couldn't find anything matching "{query}".</p>
+                        <Link to="/" className="inline-block px-6 py-2.5 bg-brand-600 text-white font-bold rounded-full hover:bg-brand-700 transition-colors shadow-md">
+                            Go Back Home
+                        </Link>
+                    </div>
+                )}
+
+                {/* Models Section */}
+                {results.models.length > 0 && (
+                    <div className="mb-16">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-full bg-blue-50 text-brand-600 flex items-center justify-center">
+                                <FaMobileAlt size={18} />
+                            </div>
+                            <h2 className="text-2xl font-bold text-slate-900">Matching Models</h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+                            {results.models.map((model, index) => (
+                                <motion.div
+                                    key={model._id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className="h-full"
+                                >
+                                    <Link
+                                        to={`/make/${model.brand?.slug || 'unknown'}/model/${model.slug}/products`}
+                                        className="bg-white rounded-[16px] shadow-sm hover:shadow-md transition-all p-5 border border-slate-100 hover:border-brand-200 block text-center group h-full flex flex-col"
+                                    >
+                                        <div className="h-20 w-20 mx-auto bg-slate-50 rounded-full flex items-center justify-center mb-4 group-hover:bg-brand-50 transition-colors p-3">
+                                            {model.image ? (
+                                                <SafeImage src={model.image} alt={model.name} className="h-full w-full object-contain mix-blend-multiply" />
+                                            ) : (
+                                                <FaMobileAlt className="text-3xl text-slate-300 group-hover:text-brand-400 transition-colors" />
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-[15px] text-slate-800 group-hover:text-brand-600 transition-colors mt-auto leading-snug">
+                                            {model.name}
+                                        </h3>
+                                    </Link>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Products Section */}
+                {results.products.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <FaBox size={18} />
+                            </div>
+                            <h2 className="text-2xl font-bold text-slate-900">Matching Products</h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                            {results.products.map((product, index) => (
+                                <div key={product._id} className="h-full">
+                                    <ProductCard product={product} />
                                 </div>
-                                <h3 className="font-semibold text-slate-700">{model.name}</h3>
-                            </Link>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-
-            {/* Products Section */}
-            {results.products.length > 0 && (
-                <div>
-                    <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <FaBox /> Matching Products
-                    </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {results.products.map((product) => (
-                            <ProductCard key={product._id} product={product} />
-                        ))}
-                    </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

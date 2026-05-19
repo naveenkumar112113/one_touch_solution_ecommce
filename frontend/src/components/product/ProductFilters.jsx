@@ -8,13 +8,15 @@ const FilterSection = ({ title, items, selectedItems, onChange, searchKey = 'nam
     if (!items || items.length === 0) return null;
 
     return (
-        <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 mb-4">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex justify-between items-center w-full font-semibold text-slate-800 mb-2"
+                className="flex justify-between items-center w-full font-bold text-slate-800 text-[15px] group"
             >
                 {title}
-                {isOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+                <span className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+                    {isOpen ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+                </span>
             </button>
 
             <AnimatePresence>
@@ -23,27 +25,31 @@ const FilterSection = ({ title, items, selectedItems, onChange, searchKey = 'nam
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar"
+                        className="overflow-hidden"
                     >
-                        {items.map(item => {
-                            const isChecked = selectedItems.includes(item.slug);
-                            return (
-                                <label key={item._id || item.slug} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
-                                    <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={(e) => {
-                                            // Handle change
-                                            onChange(item.slug);
-                                        }}
-                                        className="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500"
-                                    />
-                                    <span className={`text-sm flex-1 ${isChecked ? 'text-brand-600 font-medium' : 'text-slate-600'}`}>
-                                        {item[searchKey]}
-                                    </span>
-                                </label>
-                            );
-                        })}
+                        <div className="pt-4 space-y-2.5 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                            {items.map(item => {
+                                const isChecked = selectedItems.includes(item.slug);
+                                return (
+                                    <label key={item._id || item.slug} className="flex items-center gap-3 cursor-pointer group">
+                                        <div className="relative flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                onChange={() => onChange(item.slug)}
+                                                className="peer appearance-none w-5 h-5 border-2 border-slate-200 rounded-[6px] checked:bg-brand-600 checked:border-brand-600 focus:outline-none transition-all cursor-pointer group-hover:border-brand-400"
+                                            />
+                                            <svg className="absolute w-3 h-3 text-white left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <span className={`text-[14px] flex-1 truncate transition-colors ${isChecked ? 'text-slate-900 font-semibold' : 'text-slate-600 group-hover:text-slate-900'}`}>
+                                            {item[searchKey]}
+                                        </span>
+                                    </label>
+                                );
+                            })}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -55,28 +61,21 @@ const ProductFilters = ({ filters, setFilters, meta = {} }) => {
 
     const toggleFilter = (key, slug) => {
         setFilters(prev => {
-            // 1. Get the raw string from the previous state (safe from race conditions)
             const rawValue = prev[key] || '';
-
-            // 2. Fix the split bug: Only split if the string is not empty
             const current = rawValue ? rawValue.split(',') : [];
 
             let updated;
             if (current.includes(slug)) {
-                // Remove slug
                 updated = current.filter(i => i !== slug);
             } else {
-                // Add slug
                 updated = [...current, slug];
             }
-            // 3. Update state
             return {
                 ...prev,
                 [key]: updated.join(','),
-                page: 1 // Reset pagination on filter change
+                page: 1
             };
         });
-        console.log(filters, 'filters');
     };
 
     const handlePriceChange = (e) => {
@@ -85,42 +84,53 @@ const ProductFilters = ({ filters, setFilters, meta = {} }) => {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-0 w-full">
             {/* Price Filter */}
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                <h3 className="font-semibold text-slate-800 mb-4">Price Range</h3>
-                <div className="flex items-center gap-2">
-                    <input
-                        type="number"
-                        name="minPrice"
-                        placeholder="Min"
-                        value={filters.minPrice || ''}
-                        onChange={handlePriceChange}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500"
-                    />
-                    <span className="text-slate-400">-</span>
-                    <input
-                        type="number"
-                        name="maxPrice"
-                        placeholder="Max"
-                        value={filters.maxPrice || ''}
-                        onChange={handlePriceChange}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-500"
-                    />
+            <div className="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 mb-4">
+                <h3 className="font-bold text-slate-800 text-[15px] mb-4">Price Range</h3>
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">₹</span>
+                        <input
+                            type="number"
+                            name="minPrice"
+                            placeholder="Min"
+                            value={filters.minPrice || ''}
+                            onChange={handlePriceChange}
+                            className="w-full pl-7 pr-3 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all outline-none"
+                        />
+                    </div>
+                    <span className="text-slate-300 font-medium">-</span>
+                    <div className="relative flex-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">₹</span>
+                        <input
+                            type="number"
+                            name="maxPrice"
+                            placeholder="Max"
+                            value={filters.maxPrice || ''}
+                            onChange={handlePriceChange}
+                            className="w-full pl-7 pr-3 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all outline-none"
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* Availability */}
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                <h3 className="font-semibold text-slate-800 mb-4">Availability</h3>
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={filters.inStock === 'true'}
-                        onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked ? 'true' : '', page: 1 }))}
-                        className="w-4 h-4 text-brand-600 rounded border-gray-300 focus:ring-brand-500"
-                    />
-                    <span className="text-slate-600 text-sm">In Stock Only</span>
+            <div className="bg-white p-5 rounded-[20px] shadow-sm border border-slate-100 mb-4">
+                <h3 className="font-bold text-slate-800 text-[15px] mb-4">Availability</h3>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center">
+                        <input
+                            type="checkbox"
+                            checked={filters.inStock === 'true'}
+                            onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked ? 'true' : '', page: 1 }))}
+                            className="peer appearance-none w-5 h-5 border-2 border-slate-200 rounded-[6px] checked:bg-brand-600 checked:border-brand-600 focus:outline-none transition-all cursor-pointer group-hover:border-brand-400"
+                        />
+                        <svg className="absolute w-3 h-3 text-white left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <span className="text-[14px] text-slate-600 group-hover:text-slate-900 transition-colors">In Stock Only</span>
                 </label>
             </div>
 
@@ -130,14 +140,7 @@ const ProductFilters = ({ filters, setFilters, meta = {} }) => {
                 items={meta.categories}
                 selectedItems={filters.categoryKey ? filters.categoryKey.split(',') : []}
                 onChange={(slug) => toggleFilter('categoryKey', slug)}
-                searchKey="name" // or key if needed, using name for display
-            />
-
-            <FilterSection
-                title="Subcategory"
-                items={meta.subcategories}
-                selectedItems={filters.subcategorySlug ? filters.subcategorySlug.split(',') : []}
-                onChange={(slug) => toggleFilter('subcategorySlug', slug)}
+                searchKey="name"
             />
 
             <FilterSection
@@ -154,12 +157,21 @@ const ProductFilters = ({ filters, setFilters, meta = {} }) => {
                 onChange={(slug) => toggleFilter('modelSlug', slug)}
             />
 
-            <button
-                onClick={() => setFilters(prev => ({ categoryKey: '', subcategorySlug: '', makeSlug: '', modelSlug: '', minPrice: '', maxPrice: '', inStock: '', page: 1 }))}
-                className="w-full py-2 text-sm text-slate-500 hover:text-red-500 bg-slate-50 hover:bg-red-50 rounded-lg transition-colors"
-            >
-                Clear All Filters
-            </button>
+            <FilterSection
+                title="Subcategory"
+                items={meta.subcategories}
+                selectedItems={filters.subcategorySlug ? filters.subcategorySlug.split(',') : []}
+                onChange={(slug) => toggleFilter('subcategorySlug', slug)}
+            />
+
+            <div className="pt-2">
+                <button
+                    onClick={() => setFilters(prev => ({ categoryKey: '', subcategorySlug: '', makeSlug: '', modelSlug: '', minPrice: '', maxPrice: '', inStock: '', page: 1 }))}
+                    className="w-full py-3.5 text-[14px] font-bold text-slate-500 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 hover:shadow-sm rounded-[14px] transition-all"
+                >
+                    Clear All Filters
+                </button>
+            </div>
         </div>
     );
 };

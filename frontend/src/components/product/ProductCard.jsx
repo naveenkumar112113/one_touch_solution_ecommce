@@ -1,69 +1,114 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { FaShoppingCart, FaRegHeart, FaStar, FaEye } from 'react-icons/fa';
 import SafeImage from '../common/SafeImage';
 
 const ProductCard = ({ product }) => {
+    // Mock color variants for UI presentation
+    const mockColors = ['#0F172A', '#E5E7EB', '#EF4444', '#3B82F6', '#10B981'];
+    const displayColors = mockColors.slice(0, Math.floor(Math.random() * 3) + 2);
+
+    // Mock rating
+    const rating = (Math.random() * 1.5 + 3.5).toFixed(1); // 3.5 to 5.0
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -5 }}
-            className="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden group h-full flex flex-col"
+            whileHover={{ y: -4 }}
+            className="bg-white rounded-[20px] shadow-soft hover:shadow-card-hover transition-all duration-300 overflow-hidden group flex flex-col h-full border border-slate-100/50 backdrop-blur-sm relative"
         >
-            <Link to={`/product/${product.slug}`} className="flex-1 flex flex-col">
-                <div className="relative h-56 bg-slate-50 overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center p-6">
-                        {product.image ? (
-                            <SafeImage
-                                src={product.image}
-                                alt={product.name}
-                                className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
-                            />
-                        ) : (
-                            <span className="text-slate-300 font-medium">No Image</span>
-                        )}
-                    </div>
+            {/* Discount Badge */}
+            {Math.random() > 0.7 && (
+                <div className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10">
+                    -{(Math.random() * 20 + 10).toFixed(0)}%
+                </div>
+            )}
 
-                    {/* Badges/Tags could go here */}
+            {/* Quick Actions (Hover) */}
+            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 transform translate-x-2 group-hover:translate-x-0 duration-300">
+                <button className="w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-white shadow-sm transition-all">
+                    <FaRegHeart size={14} />
+                </button>
+                <button className="w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center text-slate-500 hover:text-brand-600 hover:bg-white shadow-sm transition-all">
+                    <FaEye size={14} />
+                </button>
+            </div>
+
+            <Link to={`/product/${product.slug}`} className="flex-1 flex flex-col p-4 pb-0">
+                {/* Image Container */}
+                <div className="relative h-48 mb-4 flex items-center justify-center overflow-hidden rounded-xl">
+                    {product.image ? (
+                        <SafeImage
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+                        />
+                    ) : (
+                        <span className="text-slate-300 font-medium">No Image</span>
+                    )}
+                    
+                    {/* Out of Stock Overlay */}
                     {product.countInStock === 0 && (
-                        <div className="absolute top-3 right-3 bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-full">
-                            Out of Stock
+                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center rounded-xl">
+                            <span className="bg-slate-900 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                Out of Stock
+                            </span>
                         </div>
                     )}
                 </div>
 
-                <div className="p-5 flex-1 flex flex-col">
-                    <div className="mb-2">
-                        {product.make && (
-                            <span className="text-xs font-bold text-brand-600 uppercase tracking-wider bg-brand-50 px-2 py-1 rounded-md">
-                                {typeof product.make === 'object' ? product.make.name : product.make}
-                            </span>
-                        )}
+                {/* Color Variants (Mocked as per design) */}
+                <div className="flex justify-center gap-1.5 mb-3">
+                    {displayColors.map((color, i) => (
+                        <div 
+                            key={i} 
+                            className="w-4 h-4 rounded-full border border-slate-200 shadow-sm"
+                            style={{ backgroundColor: color }}
+                        />
+                    ))}
+                </div>
+
+                <div className="flex-1 flex flex-col">
+                    {/* Brand / Category */}
+                    <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-semibold text-brand-600 uppercase tracking-wider">
+                            {product.brand?.name || (typeof product.make === 'object' ? product.make.name : product.make) || 'Accessory'}
+                        </span>
+                        <div className="flex items-center text-[10px] text-slate-400 font-medium">
+                            <FaStar className="text-amber-400 mr-1" size={10} />
+                            {rating}
+                        </div>
                     </div>
 
-                    <h3 className="font-semibold text-slate-800 text-lg mb-2 line-clamp-2 min-h-[3.5rem] group-hover:text-brand-600 transition-colors">
+                    {/* Title */}
+                    <h3 className="font-semibold text-slate-800 text-[15px] leading-snug mb-2 line-clamp-2 group-hover:text-brand-600 transition-colors">
                         {product.name}
                     </h3>
-
-                    {product.compatibleModels && product.compatibleModels.length > 0 && (
-                        <p className="text-xs text-slate-500 mb-4 line-clamp-1">
-                            Fits: {product.compatibleModels.length} models
-                        </p>
-                    )}
-
-                    <div className="mt-auto flex items-end justify-between">
-                        <div>
-                            <span className="text-2xl font-bold text-slate-900">₹{product.price.toLocaleString()}</span>
-                        </div>
-                        <button className="h-10 w-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-brand-600 hover:text-white transition-colors shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        </button>
-                    </div>
                 </div>
             </Link>
+
+            {/* Price and Cart Footer */}
+            <div className="p-4 pt-2 mt-auto flex items-end justify-between border-t border-slate-50/50">
+                <div className="flex flex-col">
+                    <span className="text-xs text-slate-400 font-medium mb-0.5">Price</span>
+                    <div className="flex items-baseline gap-1.5">
+                        <span className="text-lg font-bold text-slate-900 tracking-tight">₹{product.price?.toLocaleString()}</span>
+                    </div>
+                </div>
+                
+                <button 
+                    disabled={product.countInStock === 0}
+                    className={`h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm
+                        ${product.countInStock === 0 
+                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                            : 'bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white hover:shadow-md hover:-translate-y-0.5'
+                        }`}
+                >
+                    <FaShoppingCart size={14} className={product.countInStock === 0 ? '' : 'ml-[-1px]'} />
+                </button>
+            </div>
         </motion.div>
     );
 };
