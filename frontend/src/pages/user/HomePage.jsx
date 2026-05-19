@@ -14,7 +14,9 @@ const HomePage = () => {
         const fetchData = async () => {
             try {
                 // Fetch products (ideally these would be separate endpoints)
-                const { data: productsData } = await API.get('/products');
+                const { data } = await API.get('/products');
+                // The API returns { products: [], total: ... } or just an array
+                const productsData = Array.isArray(data.products) ? data.products : (Array.isArray(data) ? data : []);
                 setProducts(productsData);
                 setLoading(false);
             } catch (error) {
@@ -33,7 +35,7 @@ const HomePage = () => {
             </div>
         );
     }
-
+    console.log(products);
     // Mocking the categories using the same products array for UI demonstration
     const featuredMobileCases = products.filter(p => p.category?.name?.toLowerCase().includes('case')).slice(0, 8);
     const trendingComponents = products.filter(p => p.category?.name?.toLowerCase().includes('cctv') || p.category?.name?.toLowerCase().includes('component')).slice(0, 8);
@@ -56,29 +58,29 @@ const HomePage = () => {
             <WholesaleBanner />
 
             {/* 4. Featured Mobile Cases (or general featured) */}
-            <ProductShowcaseRow 
-                title="Featured Mobile Cases" 
-                products={displayFeatured} 
-                viewAllLink="/categories?key=mobile_cases" 
+            <ProductShowcaseRow
+                title="Featured Mobile Cases"
+                products={displayFeatured}
+                viewAllLink="/categories?key=mobile_cases"
             />
 
             {/* 5. Trending Components */}
-            <ProductShowcaseRow 
-                title="Trending Components" 
-                products={displayTrending} 
-                viewAllLink="/products/laptop-computer" 
+            <ProductShowcaseRow
+                title="Trending Components"
+                products={displayTrending}
+                viewAllLink="/products/laptop-computer"
             />
 
             {/* 6. New Arrivals */}
-            <ProductShowcaseRow 
-                title="New Arrivals" 
-                products={displayNew} 
-                viewAllLink="/products" 
+            <ProductShowcaseRow
+                title="New Arrivals"
+                products={displayNew}
+                viewAllLink="/products"
             />
 
             {/* 7. Video Guide Section */}
             <VideoGuides />
-            
+
         </div>
     );
 };

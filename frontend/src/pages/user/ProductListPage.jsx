@@ -1,11 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import API from '../../services/api';
-import { motion } from 'framer-motion';
-import { FaFilter } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaFilter, FaTimes } from 'react-icons/fa';
 import ProductGrid from '../../components/product/ProductGrid';
 import ProductFilters from '../../components/product/ProductFilters';
 import ProductSort from '../../components/product/ProductSort';
+
+// Mocked Categories for top scrollable bar as per design
+const mockCategories = [
+    { name: 'Charging Port', icon: '🔋' },
+    { name: 'Screen', icon: '📱' },
+    { name: 'Battery', icon: '⚡' },
+    { name: 'Card Display', icon: '📇' },
+    { name: 'Cables', icon: '🔌' },
+    { name: 'Accessories', icon: '🎧' },
+    { name: 'Tools', icon: '🛠️' },
+    { name: 'Screen Guard', icon: '🛡️' },
+];
 
 const ProductListPage = ({ vertical }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -16,17 +28,15 @@ const ProductListPage = ({ vertical }) => {
 
     const [filterMeta, setFilterMeta] = useState({ categories: [], subcategories: [], makes: [], models: [] });
 
-    // Filter state synced with URL + Vertical prop
     const params = Object.fromEntries([...searchParams]);
 
-    // Derived filters object
     const filters = {
-        group: vertical, // Pass vertical as group to backend
+        group: vertical,
         categoryKey: params.categoryKey || '',
         subcategorySlug: params.subcategorySlug || '',
         makeSlug: params.makeSlug || '',
         modelSlug: params.modelSlug || '',
-        brandSlug: params.brandSlug || '', // Legacy
+        brandSlug: params.brandSlug || '',
         minPrice: params.minPrice || '',
         maxPrice: params.maxPrice || '',
         inStock: params.inStock || '',
@@ -38,17 +48,11 @@ const ProductListPage = ({ vertical }) => {
     const updateFilters = (newFilters) => {
         let nextParams = { ...params, ...newFilters };
 
-        // Smart Filters: No manual resets needed.
-        // We trust the user's selection and let the background validation cleanup if needed.
-
-        // Cleanup empty
         Object.keys(nextParams).forEach(key => {
             if (nextParams[key] === '' || nextParams[key] === undefined) delete nextParams[key];
         });
 
-        // Remove internal props from URL if any mistakenly added
         if (vertical) delete nextParams.group;
-
         setSearchParams(nextParams);
     };
 
@@ -56,7 +60,6 @@ const ProductListPage = ({ vertical }) => {
         const fetchProducts = async () => {
             setLoading(true);
             try {
-                // Construct Query
                 const query = new URLSearchParams(filters);
                 if (vertical) query.set('group', vertical);
 
@@ -68,7 +71,6 @@ const ProductListPage = ({ vertical }) => {
                 } else {
                     setProducts(data);
                 }
-
                 setLoading(false);
             } catch (error) {
                 console.error('Failed to fetch products', error);
@@ -78,7 +80,6 @@ const ProductListPage = ({ vertical }) => {
 
         const fetchFilterMeta = async () => {
             try {
-                // Smart Filter API
                 const metaQuery = new URLSearchParams({
                     group: vertical || '',
                     categoryKey: filters.categoryKey || '',
@@ -90,19 +91,15 @@ const ProductListPage = ({ vertical }) => {
                 const { data } = await API.get(`/products/filters/smart?${metaQuery.toString()}`);
                 setFilterMeta(data);
 
-                // Auto-Cleanup: If current selections are invalid according to backend options, remove them.
-
                 let cleanup = {};
                 let needsCleanup = false;
                 const isInvalid = (slug, list) => list && list.length > 0 && !list.some(i => i.slug === slug);
 
-                // Check Subcategory
                 if (filters.subcategorySlug && isInvalid(filters.subcategorySlug, data.subcategories)) {
                     cleanup.subcategorySlug = '';
                     needsCleanup = true;
                 }
 
-                // Check Make
                 if (filters.makeSlug && data.makes && data.makes.length > 0) {
                     const selected = filters.makeSlug.split(',');
                     const validSlugs = data.makes.map(m => m.slug);
@@ -114,17 +111,12 @@ const ProductListPage = ({ vertical }) => {
                     }
                 }
 
-                // Check Model
                 if (filters.modelSlug && isInvalid(filters.modelSlug, data.models)) {
                     cleanup.modelSlug = '';
                     needsCleanup = true;
                 }
 
                 if (needsCleanup) {
-                    // Debounce or immediate update? Immediate update is fine as it corrects the URL.
-                    // We merge with current filters to ensure we don't lose other state, 
-                    // although updateFilters does that merging too.
-                    console.log("Smart Filter Cleaned up:", cleanup);
                     updateFilters(cleanup);
                 }
 
@@ -136,57 +128,53 @@ const ProductListPage = ({ vertical }) => {
         fetchProducts();
         fetchFilterMeta();
         window.scrollTo(0, 0);
-    }, [searchParams, vertical]); // Re-run when URL changes or vertical changes
+    }, [searchParams, vertical]);
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row justify-between items-end md:items-center mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 capitalize mb-2">
-                        {vertical ? vertical.replace('-', ' & ') + ' Products' : 'All Products'}
-                    </h1>
-                    <p className="text-slate-500">
-                        Showing {products.length} of {meta.total} results
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        className="md:hidden flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium"
-                        onClick={() => setShowMobileFilters(!showMobileFilters)}
-                    >
-                        <FaFilter /> Filters
-                    </button>
-                    <ProductSort currentSort={filters.sort} onSortChange={(val) => updateFilters({ sort: val, page: 1 })} />
+        <div className="bg-[#F8FAFC] min-h-screen pb-16 font-sans">
+            {/* Top Categories Scrollable Bar */}
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+                <div className="container mx-auto px-4 py-3">
+                    <div className="flex gap-8 overflow-x-auto custom-scrollbar pb-2 hide-scrollbar">
+                        {mockCategories.map((cat, i) => (
+                            <div key={i} className="flex flex-col items-center gap-1.5 min-w-[70px] cursor-pointer group">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-2xl group-hover:bg-brand-50 transition-colors shadow-sm border border-slate-100">
+                                    {cat.icon}
+                                </div>
+                                <span className="text-[11px] font-semibold text-slate-600 group-hover:text-brand-600 whitespace-nowrap">
+                                    {cat.name}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-8">
-                {/* Desktop Filters */}
-                <aside className="hidden md:block w-64 flex-shrink-0">
-                    <ProductFilters
-                        filters={filters}
-                        setFilters={(fn) => {
-                            const newState = fn(filters);
-                            updateFilters(newState);
-                        }}
-                        meta={filterMeta}
-                    />
-                </aside>
-
-                {/* Mobile Filters Drawer */}
-                {showMobileFilters && (
-                    <div className="fixed inset-0 z-50 bg-black/50 md:hidden" onClick={() => setShowMobileFilters(false)}>
-                        <motion.div
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            className="absolute right-0 top-0 bottom-0 w-80 bg-white p-6 overflow-y-auto"
-                            onClick={e => e.stopPropagation()}
+            <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
+                
+                {/* Mobile Filter Button & Title Area */}
+                <div className="md:hidden flex flex-col gap-4 mb-6">
+                    <h1 className="text-2xl font-bold text-slate-900 capitalize">
+                        {vertical ? vertical.replace('-', ' & ') + ' Products' : 'All Products'}
+                    </h1>
+                    <div className="flex items-center gap-2 w-full">
+                        <button
+                            className="flex-1 flex items-center justify-center gap-2 h-11 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm"
+                            onClick={() => setShowMobileFilters(true)}
                         >
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold">Filters</h2>
-                                <button onClick={() => setShowMobileFilters(false)}>Close</button>
-                            </div>
+                            <FaFilter className="text-slate-400" /> Filters
+                        </button>
+                        <div className="flex-1">
+                            <ProductSort currentSort={filters.sort} onSortChange={(val) => updateFilters({ sort: val, page: 1 })} />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
+                    {/* Desktop Filters Sidebar */}
+                    <aside className="hidden md:block w-[260px] lg:w-[280px] flex-shrink-0">
+                        <div className="sticky top-[110px] pr-2">
+                            <h2 className="text-lg font-bold text-slate-900 mb-4 px-1">Filters</h2>
                             <ProductFilters
                                 filters={filters}
                                 setFilters={(fn) => {
@@ -195,32 +183,102 @@ const ProductListPage = ({ vertical }) => {
                                 }}
                                 meta={filterMeta}
                             />
-                        </motion.div>
-                    </div>
-                )}
-
-                {/* Products Grid */}
-                <main className="flex-1">
-                    <ProductGrid products={products} loading={loading} />
-
-                    {/* Pagination */}
-                    {meta.pages > 1 && (
-                        <div className="flex justify-center mt-12 gap-2">
-                            {[...Array(meta.pages)].map((_, i) => (
-                                <button
-                                    key={i + 1}
-                                    onClick={() => updateFilters({ page: i + 1 })}
-                                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${(i + 1) === Number(filters.page)
-                                        ? 'bg-brand-600 text-white'
-                                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                        }`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
                         </div>
-                    )}
-                </main>
+                    </aside>
+
+                    {/* Mobile Filters Bottom Sheet */}
+                    <AnimatePresence>
+                        {showMobileFilters && (
+                            <React.Fragment>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden"
+                                    onClick={() => setShowMobileFilters(false)}
+                                />
+                                <motion.div
+                                    initial={{ y: '100%' }}
+                                    animate={{ y: 0 }}
+                                    exit={{ y: '100%' }}
+                                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                    className="fixed bottom-0 left-0 right-0 h-[85vh] bg-[#F8FAFC] rounded-t-3xl z-50 overflow-hidden flex flex-col md:hidden shadow-2xl"
+                                >
+                                    <div className="flex justify-between items-center p-5 bg-white border-b border-slate-100 shrink-0 rounded-t-3xl">
+                                        <h2 className="text-xl font-bold text-slate-900">Filters</h2>
+                                        <button 
+                                            onClick={() => setShowMobileFilters(false)}
+                                            className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500"
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-4">
+                                        <ProductFilters
+                                            filters={filters}
+                                            setFilters={(fn) => {
+                                                const newState = fn(filters);
+                                                updateFilters(newState);
+                                            }}
+                                            meta={filterMeta}
+                                        />
+                                    </div>
+                                    <div className="p-4 bg-white border-t border-slate-100 shrink-0">
+                                        <button 
+                                            onClick={() => setShowMobileFilters(false)}
+                                            className="w-full h-12 bg-brand-600 text-white font-bold rounded-xl shadow-md"
+                                        >
+                                            Apply Filters
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            </React.Fragment>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Main Content Area */}
+                    <main className="flex-1 min-w-0">
+                        {/* Desktop Header */}
+                        <div className="hidden md:flex justify-between items-end mb-6 bg-white p-5 rounded-[20px] shadow-sm border border-slate-100">
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-900 capitalize mb-1">
+                                    {vertical ? vertical.replace('-', ' & ') + ' Products' : 'All Products'}
+                                </h1>
+                                <p className="text-sm font-medium text-slate-500">
+                                    Showing <span className="text-slate-900">{products.length}</span> of <span className="text-slate-900">{meta.total}</span> products
+                                </p>
+                            </div>
+                            <div className="w-48">
+                                <ProductSort currentSort={filters.sort} onSortChange={(val) => updateFilters({ sort: val, page: 1 })} />
+                            </div>
+                        </div>
+
+                        {/* Products Grid */}
+                        <ProductGrid products={products} loading={loading} />
+
+                        {/* Pagination */}
+                        {meta.pages > 1 && (
+                            <div className="flex justify-center mt-12 gap-2">
+                                {[...Array(meta.pages)].map((_, i) => (
+                                    <button
+                                        key={i + 1}
+                                        onClick={() => {
+                                            updateFilters({ page: i + 1 });
+                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }}
+                                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all shadow-sm
+                                            ${(i + 1) === Number(filters.page)
+                                                ? 'bg-brand-600 text-white shadow-brand-600/20'
+                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                                            }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </main>
+                </div>
             </div>
         </div>
     );
